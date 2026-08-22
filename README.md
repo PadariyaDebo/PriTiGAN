@@ -99,8 +99,6 @@ Both reported as AUC, 0.5 = random guessing.
 Seeded throughout (`seed=42` default, numpy and TF). Original experiments ran on an Intel Xeon W-2255 with an RTX A5000 (24GB), CUDA 12.0.
 
 
-}
-
 ## Acknowledgements
 
 Supported by the Alan Turing Institute under the Turing/Accenture strategic partnership grant R-AST-040.
