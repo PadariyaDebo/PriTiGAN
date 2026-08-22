@@ -2,9 +2,7 @@
 
 Privacy-preserving GAN for synthetic time-series generation, built on TimeGAN. Instead of applying DP-SGD uniformly, noise is injected selectively into the embedding and discriminator networks; the generator inherits its privacy guarantee through post-processing.
 
-> **PriTiGAN: A Privacy-Preserving Framework for Synthetic Time-Series Data Generation**
-> Debalina Padariya, Aboozar Taherkhani, Eerke Boiten, Isabel Wagner
-> *CAAI Transactions on Intelligence Technology*, Wiley, 2026
+
 
 ## Layout
 
@@ -16,13 +14,10 @@ evaluation/
   metrics.py        JSD, WD, DTW, PCC, downstream classification/regression, memorization diagnostic
 mia/
   attacks.py        black-box and white-box membership inference attacks
-baselines/
-  doppelganger_baseline.py, evaluate_baseline.py   -- DoppelGANger comparison, needs its own environment
 configs/
   default.yaml
 train.py
 evaluate.py
-privacy_sweep.py     noise_multiplier -> epsilon lookup, without a full training run
 ```
 
 ## Setup
@@ -45,7 +40,6 @@ Sourced from the same repos as the two baseline architectures this work builds o
 
 - **MBA** — Measuring Broadband America, collected by the [FCC](https://www.fcc.gov/general/measuring-broadband-america), preprocessed to the same reduced form used by the original DoppelGANger authors ([fjxmlzn/DoppelGANger](https://github.com/fjxmlzn/DoppelGANger/blob/master/data/README.md)). DoppelGANger's own repo doesn't host a directly-downloadable raw CSV (their data README points to external download links), so this fetches the same file via a public mirror. The raw file has 5 columns but only 2 are numeric (`traffic_byte_counter`, `ping_loss_rate`) — the rest (ISP, technology, state) are categorical and unused. The model trains on 2 features for MBA, not 5.
 
-Column names are matched case/whitespace-insensitively (`Adj Close` vs `Adj_Close` both resolve), since different mirrors spell the same header differently.
 
 ## Training
 
@@ -83,10 +77,6 @@ For each synthetic sequence, finds its nearest real neighbor in the training set
 
 Runs automatically as part of `evaluate.py`; shows up in the summary as a train/test distance ratio and a "% suspiciously close" figure.
 
-## DoppelGANger baseline
-
-`baselines/` has a script for this, but it depends on `ydata-synthetic`, which is deprecated and doesn't run cleanly against current TensorFlow. It also has to run in a separate Python environment, since it forces TensorFlow into TF1 graph mode, which breaks the rest of this repo if loaded in the same process. If reproducing DoppelGANger numbers matters, going to the original repo directly may be more reliable than this wrapper.
-
 ## Privacy accounting
 
 Embedding and discriminator networks are each modeled as a Poisson-subsampled Gaussian mechanism, composed via Rényi DP, then converted to (ε, δ). Generator and recovery consume no additional budget -- they only touch DP-protected outputs, so their guarantee comes from post-processing.
@@ -108,18 +98,8 @@ Both reported as AUC, 0.5 = random guessing.
 
 Seeded throughout (`seed=42` default, numpy and TF). Original experiments ran on an Intel Xeon W-2255 with an RTX A5000 (24GB), CUDA 12.0.
 
-## Citing this work
 
-```bibtex
-@article{padariya2026pritigan,
-  title   = {PriTiGAN: A Privacy-Preserving Framework for Synthetic Time-Series Data Generation},
-  author  = {Padariya, Debalina and Taherkhani, Aboozar and Boiten, Eerke and Wagner, Isabel},
-  journal = {CAAI Transactions on Intelligence Technology},
-  year    = {2026},
-  publisher = {Wiley},
-  doi     = {10.1002/0000}
 }
-```
 
 ## Acknowledgements
 
