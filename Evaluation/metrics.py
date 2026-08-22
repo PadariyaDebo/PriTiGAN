@@ -1,5 +1,5 @@
 """
-Evaluation metrics (Section 5.3): JSD, WD, DTW, PCC for fidelity;
+Evaluation metrics: JSD, WD, DTW, PCC for fidelity;
 GRU/RNN-based classification + regression for downstream TSTR; PCA/t-SNE
 for visualization.
 """
@@ -22,13 +22,7 @@ from typing import Dict, List, Tuple
 # ── 1. Jensen-Shannon Divergence ─────────────────────────────────────────────
 def compute_jsd(real: np.ndarray, synth: np.ndarray,
                 n_bins: int = 30) -> Dict[str, float]:
-    """
-    Per-feature JSD, ported from compute_overall_jsd() in the evaluation
-    notebook: histogram real/synth values (30 bins, density=True), normalize
-    each histogram to sum to 1, then take the Jensen-Shannon distance
-    between the two. Applied once per feature (flattened across sequences
-    and timesteps) to match the paper's feature-wise tables.
-    """
+    
     real_2d  = real.reshape(-1,  real.shape[-1])
     synth_2d = synth.reshape(-1, synth.shape[-1])
     n_feat   = real_2d.shape[1]
@@ -46,13 +40,7 @@ def compute_jsd(real: np.ndarray, synth: np.ndarray,
 
 # ── 2. Wasserstein Distance ───────────────────────────────────────────────────
 def compute_wd(real: np.ndarray, synth: np.ndarray) -> Dict[str, float]:
-    """
-    Per-feature WD, ported directly from the evaluation notebook: loops over
-    features and calls scipy's wasserstein_distance on each real/synth
-    column pair. No extra normalization inside this function -- if the data
-    needs scaling, that happens upstream (e.g. the MinMaxScaler already
-    applied during preprocessing), same as in the notebook.
-    """
+  
     real_2d  = real.reshape(-1,  real.shape[-1])
     synth_2d = synth.reshape(-1, synth.shape[-1])
     n_feat   = real_2d.shape[1]
@@ -65,15 +53,7 @@ def compute_wd(real: np.ndarray, synth: np.ndarray) -> Dict[str, float]:
 # ── 3. Dynamic Time Warping ───────────────────────────────────────────────────
 def compute_dtw(real: np.ndarray, synth: np.ndarray,
                 sample_size: int = 500) -> float:
-    """
-    Average pairwise DTW over `sample_size` corresponding sequences, per
-    Section 6.2.2 of the paper ("DTW distance for each pair of corresponding
-    time-series between real and synthetic datasets... after optimally
-    warping them in time"). Uses dtaidistance's dtw_ndim.distance directly
-    on (seq_len, n_features) arrays, so alignment runs along the time axis
-    with the full feature vector at each step, and real[i] is compared
-    against its corresponding synth[i].
-    """
+    
     try:
         from dtaidistance import dtw_ndim
     except ImportError:
@@ -91,17 +71,7 @@ def compute_dtw(real: np.ndarray, synth: np.ndarray,
 
 # ── 4. Pearson Correlation Coefficient ───────────────────────────────────────
 def compute_pcc(data: np.ndarray) -> Dict[int, float]:
-    """
-    Inter-feature PCC for a single dataset, per Section 6.2.3 of the paper
-    ("quantify the linear relationship between pairs of features across all
-    time points"). For each feature, returns its average correlation with
-    every other feature. Call once on real, once on synthetic (see
-    evaluate_all), and compare the two -- matching Figures 12-13, which
-    plot one PCC value per feature per model.
-
-    data : (N, seq_len, n_features)
-    returns {feature_idx: avg_pearson_r_with_other_features}
-    """
+   
     data_2d = data.reshape(-1, data.shape[-1])
     n_feat  = data_2d.shape[1]
 
@@ -122,12 +92,7 @@ def evaluate_classification(train_synth: np.ndarray,
                              epochs:      int = 250,
                              batch_size:  int = 128,
                              seed:        int = 42) -> float:
-    """
-    TSTR binary classification (up/down) with a GRU classifier (Section 6.3.1).
-
-    train_synth : synthetic training data (N_train, seq_len, n_features)
-    test_real   : real test data          (N_test,  seq_len, n_features)
-    """
+   
     tf.random.set_seed(seed)
     seq_len, n_feat = train_synth.shape[1], train_synth.shape[2]
 
@@ -161,10 +126,7 @@ def evaluate_regression(train_synth: np.ndarray,
                          epochs:      int = 250,
                          batch_size:  int = 128,
                          seed:        int = 42) -> Tuple[float, float]:
-    """
-    TSTR regression (predict last time step from preceding ones) with a
-    SimpleRNN (Section 6.3.2). Returns (r2, mae).
-    """
+    
     tf.random.set_seed(seed)
     seq_len, n_feat = train_synth.shape[1], train_synth.shape[2]
 
@@ -197,15 +159,7 @@ def plot_pca_tsne(real: np.ndarray, synth: np.ndarray,
                   sample_size: int = 250,
                   save_path: str = None,
                   seed: int = 42):
-    """
-    PCA/t-SNE real-vs-synthetic scatter plots (Figures 5-8), ported from the
-    evaluation notebook. Each sampled (seq_len, n_features) sequence is
-    reshaped to (-1, seq_len): every feature's trajectory becomes its own
-    row, so a batch of `sample_size` sequences yields sample_size *
-    n_features rows total, each of length seq_len -- not one row per
-    sequence. PCA is fit on the real rows only, then used to transform both;
-    t-SNE is fit jointly on the concatenated real+synthetic rows.
-    """
+    
     np.random.seed(seed)
     n = min(sample_size, len(real), len(synth))
     idx_r = np.random.permutation(len(real))[:n]
@@ -253,27 +207,7 @@ def evaluate_memorization(synth: np.ndarray,
                           n_pca_components: int = 5,
                           sample_size: int = 500,
                           seed: int = 42) -> Dict[str, float]:
-    """
-    Nearest-neighbour memorization check (Section 6.1.4): for each
-    synthetic sample, find its nearest neighbour in the real training set
-    and in the real test set, in a shared PCA space. A generator that's
-    memorizing rather than generalizing will sit closer to training
-    sequences than to test sequences it never saw; a generalizing one
-    should land roughly equidistant from both.
-
-    Same PCA + nearest-neighbour machinery as monte_carlo_mia in
-    mia/attacks.py, just applied to a different question.
-
-    Returns dict:
-      mean_dist_to_train / mean_dist_to_test : avg NN distance from
-        synthetic samples to each real split
-      train_test_ratio : ~1.0 = no memorization signal; << 1.0 = warning
-        sign (not conclusive proof on its own -- see Section 6.1.4)
-      frac_suspiciously_close : fraction of synthetic samples whose
-        nearest training neighbour is closer than 10% of the median
-        test-to-train distance (the natural "how close do two
-        independently sampled real sequences get" baseline)
-    """
+    
     rng = np.random.default_rng(seed)
     n = min(sample_size, len(synth), len(train_seq), len(test_seq))
 
@@ -300,9 +234,6 @@ def evaluate_memorization(synth: np.ndarray,
     dist_to_train = nearest_dists(s_proj, tr_proj)
     dist_to_test  = nearest_dists(s_proj, te_proj)
 
-    # Reference scale: how close do held-out real samples get to training
-    # samples, just from natural distributional overlap. Used to calibrate
-    # "suspiciously close" instead of picking an arbitrary threshold.
     real_nn_dists = nearest_dists(te_proj, tr_proj)
     suspicious_threshold = 0.1 * np.median(real_nn_dists)
     frac_suspicious = float(np.mean(dist_to_train < suspicious_threshold))
@@ -325,18 +256,7 @@ def evaluate_all(real: np.ndarray,
                  n_downstream_runs: int = 5,
                  train_seq: np.ndarray = None,
                  seed: int = 42) -> dict:
-    """
-    Run the full evaluation suite and print a summary.
-
-    real / synth : (N, seq_len, n_features), test split vs synthetic
-    n_downstream_runs : classification/regression trials to average over
-        (same idea as the MIA n_runs -- gives mean ± std instead of a
-        single point estimate)
-    train_seq : optional (N_train, seq_len, n_features). If given, also
-        runs the memorization diagnostic against the real training split
-        specifically (everything else here compares against the test
-        split only, since comparing to train would reward memorization).
-    """
+    
     print(f"\n{'='*60}")
     print(f" Evaluation — {dataset_name}")
     print(f"{'='*60}")
@@ -369,8 +289,6 @@ def evaluate_all(real: np.ndarray,
     except ImportError:
         print("\n  DTW: skipped (install dtaidistance)")
 
-    # PCC — inter-feature correlation, computed separately for real and
-    # synthetic data so they can be compared (Section 6.2.3, Figures 12-13)
     pcc_real  = compute_pcc(real)
     pcc_synth = compute_pcc(synth)
     results["pcc_real"]  = pcc_real
