@@ -34,11 +34,11 @@ pip install -r requirements.txt
 
 Sourced from the same repos as the two baseline architectures this work builds on and compares against (TimeGAN [10], DoppelGANger [11]):
 
-- **Stock** — Google (GOOG) daily historical prices (Open, High, Low, Close, Adj Close, Volume), originally from [Yahoo Finance](https://finance.yahoo.com/quote/GOOG/history?p=GOOG), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/stock_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/stock_data.csv). Downloads automatically on first run.
+- **Stock** — Google (GOOG) daily historical prices (Open, High, Low, Close, Adj Close, Volume), originally from [Yahoo Finance](https://finance.yahoo.com/quote/GOOG/history?p=GOOG), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/stock_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/stock_data.csv). 
 
-- **Energy** — [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction) (id 374), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/energy_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/energy_data.csv). Downloads automatically on first run.
+- **Energy** — [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction) (id 374), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/energy_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/energy_data.csv). 
 
-- **MBA** — Measuring Broadband America, collected by the [FCC](https://www.fcc.gov/general/measuring-broadband-america), preprocessed to the same reduced form used by the original DoppelGANger authors ([fjxmlzn/DoppelGANger](https://github.com/fjxmlzn/DoppelGANger/blob/master/data/README.md)). DoppelGANger's own repo doesn't host a directly-downloadable raw CSV (their data README points to external download links), so this fetches the same file via a public mirror. The raw file has 5 columns but only 2 are numeric (`traffic_byte_counter`, `ping_loss_rate`) — the rest (ISP, technology, state) are categorical and unused. The model trains on 2 features for MBA, not 5.
+- **MBA** — Measuring Broadband America, collected by the [FCC](https://www.fcc.gov/general/measuring-broadband-america), preprocessed to the same reduced form used by the original DoppelGANger authors ([fjxmlzn/DoppelGANger](https://github.com/fjxmlzn/DoppelGANger/blob/master/data/README.md)).
 
 
 ## Training
@@ -97,8 +97,3 @@ Both reported as AUC, 0.5 = random guessing.
 ## Reproducibility
 
 Seeded throughout (`seed=42` default, numpy and TF). Original experiments ran on an Intel Xeon W-2255 with an RTX A5000 (24GB), CUDA 12.0.
-
-
-## Acknowledgements
-
-Supported by the Alan Turing Institute under the Turing/Accenture strategic partnership grant R-AST-040.
