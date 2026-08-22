@@ -13,7 +13,7 @@ venv*/
 env/
 .venv/
 
-# Training outputs (generated, not source -- can be large)
+# Training outputs 
 outputs/
 *.npy
 *.weights.h5
@@ -30,7 +30,7 @@ outputs/
 .DS_Store
 Thumbs.db
 
-# Data (downloaded at runtime, not committed)
+# Data 
 *.csv.gz
 data/*.csv
 
