@@ -1,5 +1,5 @@
 """
-Membership inference attacks (Section 6.1): black-box Monte Carlo
+Membership inference attacks: black-box Monte Carlo
 (Hilprecht et al., generator-only access, PCA + nearest-distance scoring)
 and white-box discriminator-based (Hayes et al. / LOGAN, uses discriminator
 confidence directly). Both reported as AUC, 5 runs, mean ± std, 0.5 = random.
@@ -19,7 +19,7 @@ def monte_carlo_mia(generator_fn,
                     n_pca_components: int = 5,
                     seed:            int = 42) -> float:
     """
-    Black-box Monte Carlo MIA (Hilprecht et al., 2019) — Section 6.1.1.
+    Black-box Monte Carlo MIA (Hilprecht et al., 2019).
 
     generator_fn : (n,) -> (n, seq_len, n_features), the trained generator
     member_seqs / non_member_seqs : training / holdout samples
