@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+venv*/
+env/
+.venv/
+
+# Training outputs (generated, not source -- can be large)
+outputs/
+*.npy
+*.weights.h5
+*.h5
+*.ckpt
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (downloaded at runtime, not committed)
+*.csv.gz
+data/*.csv
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,11 @@
+tensorflow==2.15.0
+# tensorflow-privacy==0.9.0 only supports Python 3.9-3.11
+tensorflow-privacy==0.9.0
+dp-accounting>=0.4.3
+numpy>=1.23
+pandas>=1.5
+scikit-learn>=1.2
+scipy>=1.9
+matplotlib>=3.6
+dtaidistance>=2.3
+tqdm>=4.64
