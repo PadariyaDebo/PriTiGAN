@@ -1,4 +1,4 @@
-# PriTiGAN default config (Section 5)
+# PriTiGAN default config 
 
 training:
   iterations: 10000
@@ -35,8 +35,6 @@ datasets:
 
   mba:
     seq_len: 56
-    # only 2 of the raw CSV's 5 columns are numeric -- see
-    # pritigan/data.py DATASET_CONFIG['mba'] for details
     n_features: 2
     batch_size: 100
     learning_rate: 5.0e-4
