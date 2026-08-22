@@ -1,9 +1,6 @@
 """
-PriTiGAN model: TimeGAN backbone + dual-noise DP (embedding + discriminator).
+PriTiGAN model: dual-noise DP (embedding + discriminator)
 
-Architecture and hyperparameters follow Section 4/5 of the paper: 3-layer
-stacked GRUs, batch size 128 (energy/stock) or 100 (MBA), seq_len 24
-(energy/stock) or 56 (MBA), lr 5e-4, 10k iterations, 70/30 split, seed 42.
 """
 
 import numpy as np
@@ -13,14 +10,10 @@ from tensorflow.keras.layers import GRU, Dense, Input
 from tensorflow.keras.losses import MeanSquaredError, BinaryCrossentropy
 from tensorflow.keras.optimizers import Adam
 import dp_accounting
-# DPKerasAdamOptimizer is imported lazily in _build_optimizers() rather than
-# here -- eagerly importing it pulls in tensorflow_privacy's v1 Estimator
-# API, which breaks on some setups even when we just want estimate_epsilon().
 
 SEED = 42
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
-
 
 def make_gru_network(n_layers: int, hidden_units: int,
                      output_units: int, name: str) -> Sequential:
@@ -36,17 +29,7 @@ def make_gru_network(n_layers: int, hidden_units: int,
 def estimate_epsilon(n_train: int, batch_size: int, noise_multiplier: float,
                      t_embedding: int, t_discriminator: int,
                      delta: float = 1e-5) -> float:
-    """
-    RDP accounting for the dual-noise mechanism (Eqs. 9-16): embedding and
-    discriminator are each treated as a self-composed, Poisson-subsampled
-    Gaussian mechanism, then composed together.
-
-    Standalone function so privacy_sweep.py can call it before running any
-    training. Uses the `dp_accounting` package rather than the old
-    tensorflow_privacy.rdp_accountant functions (compute_rdp /
-    get_privacy_spent), which newer tensorflow_privacy versions no longer
-    ship.
-    """
+                       
     q = batch_size / n_train
     accountant = dp_accounting.rdp.RdpAccountant()
 
@@ -57,8 +40,6 @@ def estimate_epsilon(n_train: int, batch_size: int, noise_multiplier: float,
                 event=dp_accounting.GaussianDpEvent(noise_multiplier)),
             steps)
 
-    # dp_accounting errors on a zero-count event, so just skip networks that
-    # weren't noised (e.g. embedding for the dptimegan baseline).
     if t_embedding > 0:
         accountant.compose(_self_composed_gaussian_event(t_embedding))
     if t_discriminator > 0:
@@ -74,8 +55,7 @@ def estimate_epsilon(n_train: int, batch_size: int, noise_multiplier: float,
 class PriTiGAN:
     """
     TimeGAN with DP noise on the embedding and discriminator networks.
-    The generator gets its privacy guarantee for free via post-processing
-    (Section 4.3.3) -- it never touches raw data directly.
+    The generator gets its privacy guarantee for free via post-processing.
 
     L_E = 10 * MSE(x, x_tilde) + 0.1 * MSE(h[:,1:,:], h_sup[:,:-1,:])
     L_G = L_u + L_ue + 100*sqrt(L_s) + 100*L_v
@@ -101,7 +81,7 @@ class PriTiGAN:
         #   dp_embedding=True,  dp_discriminator=True  -> PriTiGAN (default)
         #   dp_embedding=False, dp_discriminator=True  -> Dp-TimeGAN baseline
         #   dp_embedding=True,  dp_discriminator=False -> embedding-only DP
-        #   dp_embedding=False, dp_discriminator=False -> plain TimeGAN
+        #   dp_embedding=False, dp_discriminator=False -> TimeGAN
         #
         # When dp_embedding=False, H_DP is still computed (stop_grad(E(x)))
         # so the generator code path stays the same, but it's no longer
@@ -350,15 +330,7 @@ class PriTiGAN:
     def compute_privacy_budget(self, n_train: int, batch_size: int,
                                t_embedding: int, t_discriminator: int,
                                delta: float = 1e-5) -> float:
-        """
-        (eps, delta)-DP via RDP composition (Section 4.3, Eqs. 9-16).
-
-        t_embedding / t_discriminator need to be the actual number of
-        DP-noised updates each network received, not the outer loop
-        iteration count -- the embedding network is updated twice per
-        outer step, and the discriminator only when d_loss > 0.15, so
-        neither equals `iterations` in general.
-        """
+       
         return estimate_epsilon(
             n_train=n_train, batch_size=batch_size,
             noise_multiplier=self.noise_multiplier,
