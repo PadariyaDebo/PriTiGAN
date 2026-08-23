@@ -84,7 +84,7 @@ Runs automatically as part of `evaluate.py`; shows up in the summary as a train/
 
 ## Privacy accounting
 
-Embedding and discriminator networks are each modeled as a Poisson-subsampled Gaussian mechanism, composed via Rényi DP, then converted to (ε, δ). The generator and recovery consume no additional budget—they only touch DP-protected outputs, so their guarantee comes from post-processing.
+The embedding and discriminator networks are each modeled as a Poisson-subsampled Gaussian mechanism and composed via Rényi Differential Privacy (RDP), yielding a formal (ε, δ)-DP guarantee. The generator and recovery networks consume no additional privacy budget: as they operate exclusively on the outputs of the already-privatized embedding network, their privacy guarantee follows directly from the post-processing property of differential privacy.
 
 To check what epsilon a noise multiplier gets before a full run:
 
