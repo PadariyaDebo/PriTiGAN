@@ -1,10 +1,14 @@
 # PriTiGAN
 
-Privacy-preserving GAN for synthetic time-series generation, built on TimeGAN. Instead of applying DP-SGD uniformly, noise is injected selectively into the embedding and discriminator networks; the generator inherits its privacy guarantee through post-processing.
+This repository contains the implementation of the code for the paper "PriTiGAN: A Privacy-Preserving Framework for Synthetic Time-Series Data Generation."
 
+## About
 
+Generative models can produce realistic synthetic time-series data for applications including energy consumption, financial markets, and network telemetry. However, training such models on real-world sensitive data introduces privacy risks, particularly through membership inference attacks that may reveal whether specific individuals or records were included in the training set. Conventional approaches typically apply differential privacy uniformly throughout the model, which can substantially impair the temporal dependencies and distributional characteristics that synthetic time-series models are intended to preserve.
 
-## Layout
+This project proposes a dual-noise injection strategy that selectively applies differential privacy to the embedding and discriminator networks using DP-SGD, while the generator inherits the corresponding privacy guarantee through the post-processing property of differential privacy. The proposed approach is evaluated against TimeGAN, DoppelGANger, and DP-TimeGAN across three real-world datasets covering energy consumption, stock-market data, and MBA telecom records. Privacy is assessed using both black-box and white-box membership inference attacks, while utility is evaluated using Jensen–Shannon divergence (JSD), Wasserstein distance, dynamic time warping (DTW), Pearson correlation coefficient (PCC), and downstream classification and regression performance across a range of privacy budgets, ε.
+
+## What's in here
 
 ```
 pritigan/
