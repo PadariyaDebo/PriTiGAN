@@ -1,12 +1,12 @@
 # PriTiGAN
 
-This repository contains the implementation of the code for the paper "PriTiGAN: A Privacy-Preserving Framework for Synthetic Time-Series Data Generation."
+This repository contains the implementation of the paper "PriTiGAN: A Privacy-Preserving Framework for Synthetic Time-Series Data Generation."
 
 ## About
 
 Generative models can produce realistic synthetic time-series data for applications including energy consumption, financial markets, and network telemetry. However, training such models on real-world sensitive data introduces privacy risks, particularly through membership inference attacks that may reveal whether specific individuals or records were included in the training set. Conventional approaches typically apply differential privacy uniformly throughout the model, which can substantially impair the temporal dependencies and distributional characteristics that synthetic time-series models are intended to preserve.
 
-This project proposes a dual-noise injection strategy that selectively applies differential privacy to the embedding and discriminator networks using DP-SGD, while the generator inherits the corresponding privacy guarantee through the post-processing property of differential privacy. The proposed approach is evaluated against TimeGAN, DoppelGANger, and DP-TimeGAN across three real-world datasets covering energy consumption, stock-market data, and MBA telecom records. Privacy is assessed using both black-box and white-box membership inference attacks, while utility is evaluated using Jensen–Shannon divergence (JSD), Wasserstein distance, dynamic time warping (DTW), Pearson correlation coefficient (PCC), and downstream classification and regression performance across a range of privacy budgets, ε.
+This project proposes a dual-noise injection strategy that selectively applies differential privacy to the embedding and discriminator networks using DP-SGD, while the generator inherits the corresponding privacy guarantee through differential privacy's post-processing property. We evaluate the proposed approach against TimeGAN, DoppelGANger, and DP-TimeGAN across three real-world datasets covering energy consumption, stock-market data, and MBA telecom records. Privacy is assessed using both black-box and white-box membership inference attacks, while utility is evaluated using Jensen–Shannon divergence (JSD), Wasserstein distance, dynamic time warping (DTW), Pearson correlation coefficient (PCC), and downstream classification and regression performance across a range of privacy budgets, ε.
 
 ## What's in here
 
@@ -36,9 +36,9 @@ pip install -r requirements.txt
 
 ## Datasets
 
-Sourced from the same repos as the two baseline architectures this work builds on and compares against (TimeGAN [10], DoppelGANger [11]):
+We use thw following datasets for our implementation:
 
-- **Stock** — Google (GOOG) daily historical prices (Open, High, Low, Close, Adj Close, Volume), originally from [Yahoo Finance](https://finance.yahoo.com/quote/GOOG/history?p=GOOG), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/stock_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/stock_data.csv). 
+- **Stock** — Google (GOOG) daily historical prices, originally from [Yahoo Finance](https://finance.yahoo.com/quote/GOOG/history?p=GOOG), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/stock_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/stock_data.csv). 
 
 - **Energy** — [UCI Appliances Energy Prediction](https://archive.ics.uci.edu/dataset/374/appliances+energy+prediction) (id 374), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/energy_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/energy_data.csv). 
 
@@ -73,17 +73,17 @@ Each run saves loss curves, model weights, generated samples, and `privacy_accou
 python evaluate.py --dataset stock
 ```
 
-Fidelity metrics (JSD/WD/DTW/PCC), memorization check, both MIA attacks, PCA/t-SNE plots. Classification and regression each run 5 times with different seeds, reported as mean ± std.
+Fidelity metrics (JSD/WD/DTW/PCC), memorization check, both MIA attacks, PCA/t-SNE plots. Run classification and regression each 5 times with different seeds, and report mean ± std.
 
 ## Memorization check
 
-For each synthetic sequence, finds its nearest real neighbor in the training set and in the test set. A memorizing generator will sit closer to training records than test records; a generalizing one should sit roughly equidistant from both. The "too close" threshold is calibrated against how close held-out test sequences naturally get to training sequences, rather than a fixed value.
+For each synthetic sequence, find its nearest real neighbor in the training set and in the test set. A memorizing generator will sit closer to training records than test records; a generalizing one should sit roughly equidistant from both. The "too close" threshold is calibrated against how close held-out test sequences naturally get to training sequences, rather than a fixed value.
 
 Runs automatically as part of `evaluate.py`; shows up in the summary as a train/test distance ratio and a "% suspiciously close" figure.
 
 ## Privacy accounting
 
-Embedding and discriminator networks are each modeled as a Poisson-subsampled Gaussian mechanism, composed via Rényi DP, then converted to (ε, δ). Generator and recovery consume no additional budget -- they only touch DP-protected outputs, so their guarantee comes from post-processing.
+Embedding and discriminator networks are each modeled as a Poisson-subsampled Gaussian mechanism, composed via Rényi DP, then converted to (ε, δ). The generator and recovery consume no additional budget—they only touch DP-protected outputs, so their guarantee comes from post-processing.
 
 To check what epsilon a noise multiplier gets before a full run:
 
@@ -96,8 +96,8 @@ python privacy_sweep.py --dataset stock --noise_mults 1.0 5.0 20.0 90.0
 - **Black-box (Monte Carlo)**, Hilprecht et al. — attacker queries the generator only. PCA to 5 components, then nearest-neighbor distance.
 - **White-box (discriminator-based)**, Hayes et al. (LOGAN) — attacker has the discriminator and uses its confidence scores.
 
-Both reported as AUC, 0.5 = random guessing.
+Both are reported as AUC; 0.5 = random guessing.
 
 ## Reproducibility
 
-Seeded throughout (`seed=42` default, numpy and TF). Original experiments ran on an Intel Xeon W-2255 with an RTX A5000 (24GB), CUDA 12.0.
+Seeded throughout (`seed=42` default, NumPy and TF). Original experiments ran on an Intel Xeon W-2255 with an RTX A5000 (24GB), CUDA 12.0.
