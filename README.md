@@ -32,11 +32,11 @@ cd PriTiGAN
 pip install -r requirements.txt
 ```
 
-`tensorflow-privacy==0.9.0` only installs on Python 3.9–3.11 (silently unavailable on 3.12+) -- pin the Python version if setting up a fresh env.
+`tensorflow-privacy==0.9.0` only installs on Python 3.9–3.11.
 
 ## Datasets
 
-We use thw following datasets for our implementation:
+We use the following datasets for our implementation:
 
 - **Stock** — Google (GOOG) daily historical prices, originally from [Yahoo Finance](https://finance.yahoo.com/quote/GOOG/history?p=GOOG), preprocessed and distributed by the original TimeGAN authors: [jsyoon0823/TimeGAN/data/stock_data.csv](https://github.com/jsyoon0823/TimeGAN/blob/master/data/stock_data.csv). 
 
