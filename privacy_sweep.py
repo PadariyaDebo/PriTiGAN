@@ -1,17 +1,4 @@
 """
-Sweeps noise_multiplier -> epsilon over a grid, using the real training-set
-size for the given dataset and the dual-noise composition from Section 4.3.
-Lets you pick a noise_multiplier before spending compute on a full run,
-instead of guessing.
-
-T_d (discriminator update count) isn't known until after training, since
-the discriminator only updates when d_loss > 0.15. This script reports two
-reference points instead:
-  - T_d = iterations       (upper bound, discriminator updates every step)
-  - T_d = 0.5 * iterations (a commonly observed empirical fraction)
-Use these for planning; use the value train.py actually logs to
-privacy_accounting.json as the number to report.
-
 Usage
 -----
     python privacy_sweep.py --dataset stock \
