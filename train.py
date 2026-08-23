@@ -1,13 +1,10 @@
 """
-Training script. DP-Adam on embedding + discriminator, plain Adam on
-generator/supervisor, RDP accounting, 10k iterations, discriminator only
-updated when its loss > 0.15 (Section 5.2/5.5).
-
+Training script:
 --baseline flag selects which networks get DP noise:
   pritigan       (default) -- both embedding and discriminator
   dptimegan      -- discriminator only
   embedding_only -- embedding only
-  nondp          -- neither (plain TimeGAN)
+  nondp          -- neither (TimeGAN)
 """
 
 import argparse
@@ -100,7 +97,6 @@ def train(dataset_name: str,
     train_seq, test_seq, scaler, _train_scaled, _test_scaled = preprocess(
         df, seq_len, train_ratio=0.70, seed=seed)
 
-    # baseline runs go in their own subfolder so they don't clobber the
     # default pritigan run's outputs
     out = Path(output_dir) / dataset_name / baseline if baseline != "pritigan" \
         else Path(output_dir) / dataset_name
@@ -241,7 +237,7 @@ def train(dataset_name: str,
     # ── Privacy accounting report ──────────────────────────────────────────
     # sampling rate, noise multiplier, clip norm, per-network update counts,
     # and the final (eps, delta) -- so the noise_multiplier -> epsilon
-    # mapping is reproducible instead of just quoted in the paper.
+
     privacy_report = {
         "dataset":                dataset_name,
         "baseline":               baseline,
