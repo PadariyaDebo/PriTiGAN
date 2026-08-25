@@ -102,3 +102,13 @@ Both are reported as AUC; 0.5 = random guessing.
 ## Reproducibility
 
 Seeded throughout (`seed=42` default, NumPy and TF). Original experiments ran on an Intel Xeon W-2255 with an RTX A5000 (24GB), CUDA 12.0.
+
+## Citation
+
+```
+Padariya, D.; Taherkhani, A.; Boiten, E.; Wagner, I. "PriTiGAN: A Privacy-Preserving Framework for Synthetic Time-Series Data Generation." 
+```
+
+## License
+
+MIT — see `LICENSE`.
