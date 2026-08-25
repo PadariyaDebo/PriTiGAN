@@ -1,6 +1,4 @@
 """
-Usage
------
     python privacy_sweep.py --dataset stock \
         --noise_mults 0.5 0.8 1.0 1.5 3.0 5.0 10.0 20.0 50.0 90.0
 """
