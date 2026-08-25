@@ -43,7 +43,7 @@ DATASET_CONFIG = {
 
 
 def load_dataset(name: str, data_path: str = None) -> pd.DataFrame:
-    """Load a dataset from its remote URL, or from a local path if provided."""
+    """Load a dataset from its remote URL, or from a local path"""
     if data_path is not None:
         df = pd.read_csv(data_path)
     else:
