@@ -309,7 +309,7 @@ def evaluate_all(real: np.ndarray,
               f"(~1.0 = no memorization signal; << 1.0 = warning sign)")
         print(f"    Suspiciously close : {mem['frac_suspiciously_close']*100:.2f}%")
 
-    # optional (slower) — n_downstream_runs trials, different seed each time
+    # optional — n_downstream_runs trials, different seed each time
     if run_downstream:
         print(f"\n  Downstream tasks (TSTR) — {n_downstream_runs} runs ...")
         n_train = int(len(synth) * 0.7)
