@@ -96,7 +96,7 @@ def evaluate_classification(train_synth: np.ndarray,
     tf.random.set_seed(seed)
     seq_len, n_feat = train_synth.shape[1], train_synth.shape[2]
 
-    # Build binary labels: last-step direction
+    # Build binary labels
     def make_labels(data):
         return (data[:, -1, 0] > data[:, -2, 0]).astype(np.float32)
 
@@ -169,13 +169,13 @@ def plot_pca_tsne(real: np.ndarray, synth: np.ndarray,
     r_2d = real[idx_r].reshape(-1, seq_len)
     s_2d = synth[idx_s].reshape(-1, seq_len)
 
-    # PCA — fit on real only, matching the notebook
+    # PCA 
     pca = PCA(n_components=2, random_state=seed)
     pca.fit(r_2d)
     r_pca = pca.transform(r_2d)
     s_pca = pca.transform(s_2d)
 
-    # t-SNE — fit jointly on real+synthetic
+    # t-SNE 
     combined = np.concatenate([r_2d, s_2d], axis=0)
     tsne_res = TSNE(n_components=2, random_state=seed,
                     perplexity=40, max_iter=300).fit_transform(combined)
