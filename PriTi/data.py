@@ -96,9 +96,7 @@ def preprocess(df: pd.DataFrame,
                ) -> Tuple[np.ndarray, np.ndarray, MinMaxScaler, np.ndarray, np.ndarray]:
     """
     Split raw values into train/test (temporal order preserved for the
-    split itself), fit-scale on train only, then window each split
-    separately so no window straddles the train/test boundary.
-
+    split itself).
     Returns:
         train_seq   : windowed, shuffled training sequences
         test_seq    : windowed test sequences (order preserved)
