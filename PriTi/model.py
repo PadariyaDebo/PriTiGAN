@@ -51,11 +51,10 @@ def estimate_epsilon(n_train: int, batch_size: int, noise_multiplier: float,
     return float(accountant.get_epsilon(delta))
 
 
-# ── PriTiGAN Class ───────────────────────────────────────────────────────────
+# PriTiGAN Class 
 class PriTiGAN:
     """
     TimeGAN with DP noise on the embedding and discriminator networks.
-    The generator gets its privacy guarantee for free via post-processing.
 
     L_E = 10 * MSE(x, x_tilde) + 0.1 * MSE(h[:,1:,:], h_sup[:,:-1,:])
     L_G = L_u + L_ue + 100*sqrt(L_s) + 100*L_v
@@ -82,18 +81,15 @@ class PriTiGAN:
         #   dp_embedding=False, dp_discriminator=True  -> Dp-TimeGAN baseline
         #   dp_embedding=True,  dp_discriminator=False -> embedding-only DP
         #   dp_embedding=False, dp_discriminator=False -> TimeGAN
-        #
         # When dp_embedding=False, H_DP is still computed (stop_grad(E(x)))
-        # so the generator code path stays the same, but it's no longer
-        # actually private since E was never noised -- the post-processing
-        # argument only holds when both flags are True.
+    
         self.dp_embedding     = config.get("dp_embedding", True)
         self.dp_discriminator = config.get("dp_discriminator", True)
 
         self._build_networks()
         self._build_optimizers()
 
-    # ── Network construction ─────────────────────────────────────────────────
+    #  Network construction 
     def _build_networks(self):
         seq, n, h, L = (self.seq_len, self.n_features,
                         self.hidden_dim, self.num_layers)
@@ -130,18 +126,17 @@ class PriTiGAN:
         self.discriminator_model = Model(
             inputs=X, outputs=Y_real, name="DiscriminatorReal")
 
-    # ── Optimizer construction ───────────────────────────────────────────────
+    # Optimizer construction 
     def _build_optimizers(self):
         # lazy import, see note at top of file
         from tensorflow_privacy.privacy.optimizers.dp_optimizer_keras import (
             DPKerasAdamOptimizer)
 
-        # generator/supervisor stay non-DP (post-processing covers them)
         self.gen_opt = Adam(learning_rate=self.learning_rate)
         self.sup_opt = Adam(learning_rate=self.learning_rate)
         self.ae_opt  = Adam(learning_rate=self.learning_rate)  # phase 1 only
 
-        # embedding/discriminator: DP or plain Adam depending on ablation flags
+        # embedding/discriminator: DP or Adam depending on ablation flags
         dp_kwargs = dict(
             l2_norm_clip=self.l2_norm_clip,
             noise_multiplier=self.noise_multiplier,
@@ -153,7 +148,7 @@ class PriTiGAN:
         self.disc_opt = (DPKerasAdamOptimizer(**dp_kwargs) if self.dp_discriminator
                          else Adam(learning_rate=self.learning_rate))
 
-    # ── Loss helpers ─────────────────────────────────────────────────────────
+    # Loss helpers 
     @staticmethod
     def _variance_loss(x_real, x_fake):
         """Mean/std matching term (Section 4.1.3)."""
@@ -163,7 +158,7 @@ class PriTiGAN:
                 tf.reduce_mean(tf.abs(tf.sqrt(var_r + 1e-6) -
                                       tf.sqrt(var_f + 1e-6))))
 
-    # ── Phase 1: Autoencoder pre-training ────────────────────────────────────
+    # Phase 1: Autoencoder pre-training 
     @tf.function
     def train_autoencoder(self, x):
         """Non-DP pretraining of embedding + recovery."""
@@ -179,7 +174,7 @@ class PriTiGAN:
                 self.embedder.trainable_variables + self.recovery.trainable_variables))
         return tf.sqrt(loss / self.lambda1)
 
-    # ── Phase 2: Supervisor pre-training ─────────────────────────────────────
+    # Phase 2: Supervisor pre-training 
     @tf.function
     def train_supervisor(self, x):
         """Train supervisor to predict next-step latent transitions."""
@@ -192,7 +187,7 @@ class PriTiGAN:
             zip(grads, self.supervisor.trainable_variables))
         return loss
 
-    # ── Phase 3a: Embedding update ───────────────────────────────────────────
+    #  Phase 3a: Embedding update 
     @tf.function
     def train_embedding_dp(self, x):
         """
@@ -214,8 +209,7 @@ class PriTiGAN:
                            self.lambda2 * tf.reduce_mean(
                                tf.square(h[:, 1:, :] - h_sup[:, :-1, :]),
                                axis=[1, 2]))
-            # has to stay inside the tape, otherwise tape.gradient() returns
-            # None for every variable
+            
             mean_loss = tf.reduce_mean(per_example)
         var_list = (self.embedder.trainable_variables +
                     self.recovery.trainable_variables)
@@ -226,21 +220,20 @@ class PriTiGAN:
             self.emb_opt.apply_gradients(zip(grads, var_list))
         return tf.sqrt(recon_loss)
 
-    # ── Phase 3b: Generator update (standard Adam) ───────────────────────────
+    #  Phase 3b: Generator update (standard Adam) 
     @tf.function
     def train_generator(self, x, z):
         """
-        Generator update (Algorithm 1, lines 43-49).
+        Generator update:
 
         h_dp = stop_grad(E(x)) is treated as a constant, so none of the
-        generator's loss terms backprop into the embedding network -- every
+        generator's loss terms backprop into the embedding network; every
         term is a function of either the discriminator's output or h_dp,
         never the raw batch directly. That's what makes the post-processing
-        argument in Section 4.3.3 apply to the whole generator loss.
+        argument apply to the whole generator loss.
 
         L_G = L_u + L_ue + 100*sqrt(L_s) + 100*L_v
         """
-        # computed outside the tape -- generator shouldn't get gradients
         # through the embedding network
         h_dp = tf.stop_gradient(self.embedder(x, training=False))
 
@@ -254,8 +247,7 @@ class PriTiGAN:
             h_gen_sup = self.supervisor(e_hat, training=True)
             l_s = MeanSquaredError()(h_gen_sup, h_dp)
 
-            # mean/std matching against h_dp and the raw generator output,
-            # both in latent space -- keeps this term privacy-clean too
+            # mean/std matching against h_dp and the raw generator output
             l_v = self._variance_loss(h_dp, e_hat)
 
             loss = l_u + l_ue + 100.0 * tf.sqrt(l_s) + 100.0 * l_v
@@ -266,7 +258,7 @@ class PriTiGAN:
         self.gen_opt.apply_gradients(zip(grads, var_list))
         return l_u, l_s, l_v
 
-    # ── Phase 3c: Discriminator update (DP) ─────────────────────────────────
+    #  Phase 3c: Discriminator update (DP) 
     @tf.function
     def train_discriminator_dp(self, x, z):
         """
@@ -305,7 +297,7 @@ class PriTiGAN:
                 zip(grads, self.discriminator.trainable_variables))
         return mean_loss
 
-    # ── Discriminator loss (no update) for threshold check ───────────────────
+    #  Discriminator loss 
     def get_discriminator_loss(self, x, z):
         h_real   = self.embedder(x, training=False)
         y_real   = self.discriminator_model(x, training=False)
@@ -318,7 +310,7 @@ class PriTiGAN:
         d_fe  = bce(tf.zeros_like(y_fake_e), y_fake_e)
         return d_r + d_f + self.gamma * d_fe
 
-    # ── Synthetic data generation ─────────────────────────────────────────────
+    #  Synthetic data generation 
     def generate(self, n_samples: int) -> np.ndarray:
         """Generate n_samples synthetic sequences."""
         z = np.random.uniform(0, 1,
@@ -326,7 +318,7 @@ class PriTiGAN:
                               ).astype(np.float32)
         return self.synthetic_data.predict(z, verbose=0)
 
-    # ── Privacy accounting ───────────────────────────────────────────────────
+    #  Privacy accounting 
     def compute_privacy_budget(self, n_train: int, batch_size: int,
                                t_embedding: int, t_discriminator: int,
                                delta: float = 1e-5) -> float:
