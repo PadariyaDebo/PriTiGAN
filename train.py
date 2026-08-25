@@ -1,5 +1,4 @@
 """
-Training script:
 --baseline flag selects which networks get DP noise:
   pritigan       (default) -- both embedding and discriminator
   dptimegan      -- discriminator only
@@ -19,7 +18,6 @@ from pritigan.model import PriTiGAN
 from pritigan.data  import load_dataset, preprocess, DATASET_CONFIG
 
 # Default noise_multiplier / l2_norm_clip per dataset, tuned for eps ≈ 1
-# (Section 5.5).
 DEFAULT_DP = {
     "stock":  {"noise_multiplier": 90.0, "l2_norm_clip": 1.5},
     "energy": {"noise_multiplier": 1.0,  "l2_norm_clip": 1.0},
@@ -91,20 +89,19 @@ def train(dataset_name: str,
     noise_multiplier = noise_mult if noise_mult is not None else dp_cfg["noise_multiplier"]
     l2_norm_clip     = l2_clip   if l2_clip   is not None else dp_cfg["l2_norm_clip"]
 
-    # ── Load and preprocess data ──────────────────────────────────────────
+    #  Load and preprocess data 
     print(f"\n[1/4] Loading '{dataset_name}' dataset...")
     df = load_dataset(dataset_name, data_path)
     train_seq, test_seq, scaler, _train_scaled, _test_scaled = preprocess(
         df, seq_len, train_ratio=0.70, seed=seed)
 
-    # default pritigan run's outputs
     out = Path(output_dir) / dataset_name / baseline if baseline != "pritigan" \
         else Path(output_dir) / dataset_name
     out.mkdir(parents=True, exist_ok=True)
     np.save(out / "test_sequences.npy",  test_seq)
     np.save(out / "train_sequences.npy", train_seq)
 
-    # ── Build model ───────────────────────────────────────────────────────
+    #  Build model 
     print(f"\n[2/4] Building PriTiGAN (baseline={baseline}, "
           f"dp_embedding={dp_embedding}, dp_discriminator={dp_discriminator}, "
           f"noise_mult={noise_multiplier}, l2_clip={l2_norm_clip})...")
@@ -127,7 +124,7 @@ def train(dataset_name: str,
     real_iter  = make_tf_dataset(train_seq, batch_size, seed)
     noise_iter = make_noise_iter(batch_size, seq_len, n_features)
 
-    # ── Phase 1: Autoencoder ──────────────────────────────────────────────
+    # Phase 1: Autoencoder 
     print(f"\n[3/4] Phase 1 — Autoencoder pre-training ({iterations} steps)...")
     ae_loss_history = []
     for step in range(iterations):
@@ -137,7 +134,7 @@ def train(dataset_name: str,
         if step % 2000 == 0:
             print(f"  Step {step:5d} | AE loss: {float(loss):.6f}")
 
-    # ── Phase 2: Supervisor ───────────────────────────────────────────────
+    #  Phase 2: Supervisor 
     print(f"\n        Phase 2 — Supervisor pre-training ({iterations} steps)...")
     sup_loss_history = []
     for step in range(iterations):
@@ -147,14 +144,12 @@ def train(dataset_name: str,
         if step % 2000 == 0:
             print(f"  Step {step:5d} | SUP loss: {float(loss):.6f}")
 
-    # ── Phase 3: Joint training ───────────────────────────────────────────
+    #  Phase 3: Joint training 
     print(f"\n        Phase 3 — Joint DP training ({iterations} steps)...")
-    t_embedding_updates    = 0   # actual count of DP-noised embedding updates
-    t_discriminator_updates = 0  # actual count of DP-noised discriminator updates
+    t_embedding_updates    = 0  
+    t_discriminator_updates = 0  
     phase3_history = []  # step, g_u, g_s, g_v, e_loss, d_loss, d_updated
     for step in range(iterations):
-        # generator trained twice per discriminator update; embedding is
-        # updated inside this loop too, so it gets 2 DP updates per outer step
         for _ in range(2):
             x = next(real_iter)
             z = next(noise_iter)
@@ -202,10 +197,9 @@ def train(dataset_name: str,
         w.writerows(phase3_history)
     print(f"  Saved loss curves → {out}/phase{{1,2,3}}_*.csv")
 
-    # ── Privacy budget ────────────────────────────────────────────────────
-    # only count updates from networks that were actually DP-noised in this
-    # baseline -- e.g. dptimegan reports T_e=0 since embedding wasn't noised
-    eff_t_embedding    = t_embedding_updates    if dp_embedding     else 0
+    # ── Privacy budget ───────────────────────────────────────────────────────
+    # only count updates from networks that were actually DP-noised in this run
+    eff_t_embedding     = t_embedding_updates     if dp_embedding     else 0
     eff_t_discriminator = t_discriminator_updates if dp_discriminator else 0
 
     print("\n[4/4] Computing privacy budget (ε, δ)...")
@@ -224,53 +218,41 @@ def train(dataset_name: str,
         delta=delta,
     )
     print(f"  Final ε = {eps:.4f} (δ = {delta})")
-    if not (dp_embedding and dp_discriminator):
-        print(f"  [WARNING: this baseline does not privatize all networks, so "
-              f"the full-pipeline post-processing argument (Section 4.3.3) "
-              f"does NOT hold. This ε only covers the network(s) that were "
-              f"actually DP-noised in this configuration, not the whole "
-              f"generative pipeline.]")
-    else:
-        print(f"  [Composed over both Embedding (T_e={eff_t_embedding}) and "
-              f"Discriminator (T_d={eff_t_discriminator}) updates, per Eq. 9-16.]")
 
-    # ── Privacy accounting report ──────────────────────────────────────────
+    #  Privacy accounting report
     # sampling rate, noise multiplier, clip norm, per-network update counts,
     # and the final (eps, delta) -- so the noise_multiplier -> epsilon
-
     privacy_report = {
-        "dataset":                dataset_name,
-        "baseline":               baseline,
-        "dp_embedding":           dp_embedding,
-        "dp_discriminator":       dp_discriminator,
-        "timestamp_utc":          time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "n_train":                len(train_seq),
-        "batch_size":             batch_size,
-        "sampling_rate_q":        q,
-        "noise_multiplier":       noise_multiplier,
-        "l2_norm_clip":           l2_norm_clip,
-        "delta":                  delta,
-        "rdp_orders":             "selected internally by dp_accounting.rdp.RdpAccountant "
-                                    "(current tensorflow_privacy backend; no longer a "
-                                    "user-specified fixed grid)",
-        "iterations":             iterations,
-        "t_embedding_updates":    eff_t_embedding,
+        "dataset":                 dataset_name,
+        "baseline":                baseline,
+        "dp_embedding":            dp_embedding,
+        "dp_discriminator":        dp_discriminator,
+        "timestamp_utc":           time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "n_train":                 len(train_seq),
+        "batch_size":              batch_size,
+        "sampling_rate_q":         q,
+        "noise_multiplier":        noise_multiplier,
+        "l2_norm_clip":            l2_norm_clip,
+        "delta":                   delta,
+        "rdp_orders":              "selected internally by dp_accounting.rdp.RdpAccountant",
+        "iterations":              iterations,
+        "t_embedding_updates":     eff_t_embedding,
         "t_discriminator_updates": eff_t_discriminator,
         "full_pipeline_guarantee": dp_embedding and dp_discriminator,
-        "epsilon":                eps,
-        "seed":                   seed,
+        "epsilon":                 eps,
+        "seed":                    seed,
     }
     with open(out / "privacy_accounting.json", "w") as f:
         json.dump(privacy_report, f, indent=2)
     print(f"  Saved full privacy accounting report → {out / 'privacy_accounting.json'}")
 
-    # ── Generate and save synthetic data ──────────────────────────────────
+    #  Generate and save synthetic data 
     print("\n  Generating synthetic sequences...")
     synth = model.generate(n_samples=len(train_seq))
     np.save(out / "synthetic_sequences.npy", synth)
     print(f"  Saved synthetic data → {out / 'synthetic_sequences.npy'}")
 
-    # ── Save model weights ────────────────────────────────────────────────
+    # Save model weights
     model.embedder.save_weights(str(out / "embedder.weights.h5"))
     model.generator.save_weights(str(out / "generator.weights.h5"))
     model.discriminator.save_weights(str(out / "discriminator.weights.h5"))
