@@ -24,7 +24,7 @@ def monte_carlo_mia(generator_fn,
     generator_fn : (n,) -> (n, seq_len, n_features), the trained generator
     member_seqs / non_member_seqs : training / holdout samples
     n_mc_samples : number of synthetic samples to draw
-    n_pca_components : PCA components (paper uses 5)
+    n_pca_components : PCA components (5)
 
     Returns AUC (0.50 = random guess).
     """
@@ -72,7 +72,7 @@ def discriminator_mia(embedder_fn,
                       member_seqs:     np.ndarray,
                       non_member_seqs: np.ndarray) -> float:
     """
-    White-box discriminator MIA (Hayes et al. LOGAN, 2019) — Section 6.1.2.
+    White-box discriminator MIA (Hayes et al. LOGAN, 2019)
     Discriminator confidence (P(real)) is used directly as membership score.
 
     embedder_fn      : (x) -> latent H
@@ -105,12 +105,12 @@ def evaluate_mia(model,
                  member_size: int = 500,
                  seed:        int = 42) -> Dict[str, float]:
     """
-    Both attacks over n_runs independent trials, mean ± std (Section 6.1.3).
+    Both attacks over n_runs independent trials, mean ± std
 
     model       : trained PriTiGAN instance
     train_seq   : samples for the member set
     test_seq    : samples for the non-member set
-    member_size : samples per class (paper uses 500)
+    member_size : samples per class (500)
 
     Returns dict: bb_auc_mean, bb_auc_std, wb_auc_mean, wb_auc_std
     """
