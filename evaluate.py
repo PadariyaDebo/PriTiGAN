@@ -1,6 +1,6 @@
 """
-Evaluation script: fidelity metrics, downstream TSTR tasks, black/white-box
-MIA, and PCA/t-SNE plots, run against a trained model's saved outputs.
+Evaluation: fidelity metrics, downstream TSTR tasks, black/white-box
+MIA and PCA/t-SNE plots, run against a trained model's saved outputs.
 """
 
 import argparse
@@ -23,7 +23,7 @@ def run_evaluation(dataset_name: str,
     out       = (Path(output_dir) / dataset_name / baseline
                 if baseline != "pritigan" else Path(output_dir) / dataset_name)
 
-    # ── Load saved sequences ─────────────────────────────────────────────
+    # Load saved sequences 
     print(f"Loading data from {out}/ ...")
     train_seq = np.load(out / "train_sequences.npy")
     test_seq  = np.load(out / "test_sequences.npy")
@@ -33,7 +33,7 @@ def run_evaluation(dataset_name: str,
     print(f"  Test:      {test_seq.shape}")
     print(f"  Synthetic: {synth.shape}")
 
-    # ── Fidelity + Downstream metrics ────────────────────────────────────
+    #  Fidelity + Downstream metrics 
     n_eval = min(len(test_seq), len(synth))
     results = evaluate_all(
         real=test_seq[:n_eval],
@@ -44,7 +44,7 @@ def run_evaluation(dataset_name: str,
         seed=seed,
     )
 
-    # ── PCA / t-SNE ──────────────────────────────────────────────────────
+    #  PCA / t-SNE 
     plot_pca_tsne(
         real=test_seq,
         synth=synth,
@@ -53,7 +53,7 @@ def run_evaluation(dataset_name: str,
         seed=seed,
     )
 
-    # ── MIA — rebuild model to load weights ──────────────────────────────
+    #  MIA 
     print("\nLoading model weights for MIA evaluation...")
     model = PriTiGAN({
         "seq_len":          cfg["seq_len"],
@@ -89,7 +89,7 @@ def run_evaluation(dataset_name: str,
     )
     results.update(mia_results)
 
-    # ── Summary ───────────────────────────────────────────────────────────
+    # Summary 
     print("\n" + "="*50)
     print(" SUMMARY")
     print("="*50)
