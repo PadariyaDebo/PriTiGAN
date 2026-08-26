@@ -151,7 +151,7 @@ class PriTiGAN:
     # Loss helpers 
     @staticmethod
     def _variance_loss(x_real, x_fake):
-        """Mean/std matching term (Section 4.1.3)."""
+        """Mean/std matching term """
         mu_r, var_r = tf.nn.moments(x_real, axes=[0])
         mu_f, var_f = tf.nn.moments(x_fake, axes=[0])
         return (tf.reduce_mean(tf.abs(mu_r - mu_f)) +
@@ -191,7 +191,7 @@ class PriTiGAN:
     @tf.function
     def train_embedding_dp(self, x):
         """
-        Embedding + recovery update (Section 4.2.2).
+        Embedding + recovery update.
         L_E = lambda1 * MSE(x, x_tilde) + lambda2 * MSE(h[:,1:], h_sup[:,:-1])
 
         DP-SGD if self.dp_embedding, otherwise plain Adam (see __init__).
@@ -262,7 +262,7 @@ class PriTiGAN:
     @tf.function
     def train_discriminator_dp(self, x, z):
         """
-        Discriminator update (Section 4.2.2).
+        Discriminator update.
         L_D = BCE(real) + BCE(fake_sup) + gamma * BCE(fake_raw)
 
         DP-SGD if self.dp_discriminator, otherwise plain Adam.
