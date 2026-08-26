@@ -69,8 +69,7 @@ def train(dataset_name: str,
           baseline:     str   = "pritigan"):
     """
     Three-phase training: autoencoder pretrain, supervisor pretrain, joint
-    DP training, `iterations` steps each. `baseline` picks which networks
-    get DP noise (see BASELINE_DP_FLAGS).
+    DP training, `iterations` steps each.
     """
     if baseline not in BASELINE_DP_FLAGS:
         raise ValueError(f"Unknown baseline '{baseline}'. "
