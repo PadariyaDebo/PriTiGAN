@@ -14,8 +14,8 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 
-from pritigan.model import PriTiGAN
-from pritigan.data  import load_dataset, preprocess, DATASET_CONFIG
+from PriTi.model import PriTiGAN
+from PriTi.data  import load_dataset, preprocess, DATASET_CONFIG
 
 # Default noise_multiplier / l2_norm_clip per dataset
 # (the resulting epsilon is written to privacy_accounting.json)
