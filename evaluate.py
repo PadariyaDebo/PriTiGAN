@@ -7,11 +7,10 @@ import argparse
 import numpy as np
 from pathlib import Path
 
-from pritigan.model       import PriTiGAN
-from pritigan.data        import DATASET_CONFIG
-from evaluation.metrics   import evaluate_all, plot_pca_tsne
-from mia.attacks          import evaluate_mia
-
+from PriTi.model          import PriTiGAN
+from PriTi.data           import DATASET_CONFIG
+from Evaluation.metrics   import evaluate_all, plot_pca_tsne
+from MIA.attacks          import evaluate_mia
 
 def run_evaluation(dataset_name: str,
                    output_dir:   str = "outputs",
