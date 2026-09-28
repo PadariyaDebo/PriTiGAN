@@ -17,7 +17,8 @@ from pathlib import Path
 from pritigan.model import PriTiGAN
 from pritigan.data  import load_dataset, preprocess, DATASET_CONFIG
 
-# Default noise_multiplier / l2_norm_clip per dataset, tuned for eps ≈ 1
+# Default noise_multiplier / l2_norm_clip per dataset
+# (the resulting epsilon is written to privacy_accounting.json)
 DEFAULT_DP = {
     "stock":  {"noise_multiplier": 90.0, "l2_norm_clip": 1.5},
     "energy": {"noise_multiplier": 1.0,  "l2_norm_clip": 1.0},
@@ -114,7 +115,8 @@ def train(dataset_name: str,
         "lambda2":          0.1,
         "noise_multiplier": noise_multiplier,
         "l2_norm_clip":     l2_norm_clip,
-        "num_microbatches": 1,
+        # one microbatch per example = per-example clipping (Section 5.5)
+        "num_microbatches": batch_size,
         "learning_rate":    5e-4,
         "dp_embedding":     dp_embedding,
         "dp_discriminator": dp_discriminator,
@@ -237,7 +239,12 @@ def train(dataset_name: str,
         "iterations":              iterations,
         "t_embedding_updates":     eff_t_embedding,
         "t_discriminator_updates": eff_t_discriminator,
-        "full_pipeline_guarantee": dp_embedding and dp_discriminator,
+        "epsilon_covers": "embedding and discriminator DP-SGD updates",
+        "full_pipeline_guarantee": False,
+        "not_privatised": ["autoencoder pre-training",
+                           "supervisor pre-training",
+                           "generator updates",
+                           "discriminator update gate (d_loss > 0.15)"],
         "epsilon":                 eps,
         "seed":                    seed,
     }
