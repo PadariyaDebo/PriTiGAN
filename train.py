@@ -18,7 +18,6 @@ from PriTi.model import PriTiGAN, estimate_epsilon
 from PriTi.data  import load_dataset, preprocess, DATASET_CONFIG
 
 # Default noise_multiplier / l2_norm_clip per dataset
-# (the resulting epsilon is written to privacy_accounting.json)
 DEFAULT_DP = {
     "stock":  {"noise_multiplier": 90.0, "l2_norm_clip": 1.5},
     "energy": {"noise_multiplier": 1.0,  "l2_norm_clip": 1.0},
@@ -211,10 +210,6 @@ def train(dataset_name: str,
     print(f"  Discriminator DP updates (T_d): {eff_t_discriminator}"
           f"{'' if dp_discriminator else '  [not privatized in this baseline]'}")
     q = batch_size / len(train_seq)
-    # With one microbatch the whole batch gradient is clipped to norm C, so
-    # changing one example can move it by up to 2C (sensitivity 2C). The
-    # noise std is noise_multiplier * C, so the effective noise multiplier
-    # for accounting is noise_multiplier / 2.
     effective_noise_multiplier = noise_multiplier / 2.0
     eps = estimate_epsilon(
         n_train=len(train_seq),
@@ -227,8 +222,6 @@ def train(dataset_name: str,
     print(f"  Final ε = {eps:.4f} (δ = {delta})")
 
     #  Privacy accounting report
-    # sampling rate, noise multiplier, clip norm, per-network update counts,
-    # and the final (eps, delta) -- so the noise_multiplier -> epsilon
     privacy_report = {
         "dataset":                 dataset_name,
         "baseline":                baseline,
