@@ -223,17 +223,6 @@ class PriTiGAN:
     #  Phase 3b: Generator update (standard Adam) 
     @tf.function
     def train_generator(self, x, z):
-        """
-        Generator update:
-
-        h_dp = stop_grad(E(x)) is treated as a constant, so none of the
-        generator's loss terms backprop into the embedding network; every
-        term is a function of either the discriminator's output or h_dp,
-        never the raw batch directly. That's what makes the post-processing
-        argument apply to the whole generator loss.
-
-        L_G = L_u + L_ue + 100*sqrt(L_s) + 100*L_v
-        """
         # through the embedding network
         h_dp = tf.stop_gradient(self.embedder(x, training=False))
 
