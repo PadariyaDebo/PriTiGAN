@@ -14,7 +14,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 
-from PriTi.model import PriTiGAN
+from PriTi.model import PriTiGAN, estimate_epsilon
 from PriTi.data  import load_dataset, preprocess, DATASET_CONFIG
 
 # Default noise_multiplier / l2_norm_clip per dataset
@@ -115,6 +115,7 @@ def train(dataset_name: str,
         "lambda2":          0.1,
         "noise_multiplier": noise_multiplier,
         "l2_norm_clip":     l2_norm_clip,
+        # one microbatch: the batch gradient is clipped as a whole (Section 5.5)
         "num_microbatches": 1,
         "learning_rate":    5e-4,
         "dp_embedding":     dp_embedding,
@@ -210,9 +211,15 @@ def train(dataset_name: str,
     print(f"  Discriminator DP updates (T_d): {eff_t_discriminator}"
           f"{'' if dp_discriminator else '  [not privatized in this baseline]'}")
     q = batch_size / len(train_seq)
-    eps = model.compute_privacy_budget(
+    # With one microbatch the whole batch gradient is clipped to norm C, so
+    # changing one example can move it by up to 2C (sensitivity 2C). The
+    # noise std is noise_multiplier * C, so the effective noise multiplier
+    # for accounting is noise_multiplier / 2.
+    effective_noise_multiplier = noise_multiplier / 2.0
+    eps = estimate_epsilon(
         n_train=len(train_seq),
         batch_size=batch_size,
+        noise_multiplier=effective_noise_multiplier,
         t_embedding=eff_t_embedding,
         t_discriminator=eff_t_discriminator,
         delta=delta,
@@ -232,6 +239,9 @@ def train(dataset_name: str,
         "batch_size":              batch_size,
         "sampling_rate_q":         q,
         "noise_multiplier":        noise_multiplier,
+        "num_microbatches":        1,
+        "sensitivity":             "2C (batch gradient clipped as a whole)",
+        "effective_noise_multiplier_for_accounting": effective_noise_multiplier,
         "l2_norm_clip":            l2_norm_clip,
         "delta":                   delta,
         "rdp_orders":              "selected internally by dp_accounting.rdp.RdpAccountant",
