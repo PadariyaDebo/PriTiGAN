@@ -22,8 +22,8 @@ import argparse
 import csv
 from pathlib import Path
 
-from pritigan.data  import load_dataset, preprocess, DATASET_CONFIG
-from pritigan.model import estimate_epsilon
+from PriTi.data  import load_dataset, preprocess, DATASET_CONFIG
+from PriTi.model import estimate_epsilon
 
 
 def sweep(dataset_name: str,
@@ -102,3 +102,4 @@ if __name__ == "__main__":
         data_path=args.data_path,
         output_dir=args.output_dir,
     )
+   
