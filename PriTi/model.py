@@ -161,7 +161,6 @@ class PriTiGAN:
     # Phase 1: Autoencoder pre-training 
     @tf.function
     def train_autoencoder(self, x):
-        """Non-DP pretraining of embedding + recovery."""
         with tf.GradientTape() as tape:
             x_tilde = self.autoencoder(x, training=True)
             loss = MeanSquaredError()(x, x_tilde)
