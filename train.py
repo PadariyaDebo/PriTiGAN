@@ -1,4 +1,4 @@
-   """
+"""
 --baseline flag selects which networks get DP noise:
   pritigan       (default) -- both embedding and discriminator
   dptimegan      -- discriminator only
@@ -306,6 +306,6 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         seed=args.seed,
         baseline=args.baseline,
-    )    
-  
-    
+    )  
+
+             
