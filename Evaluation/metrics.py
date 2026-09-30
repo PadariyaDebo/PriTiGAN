@@ -30,8 +30,12 @@ def compute_jsd(real: np.ndarray, synth: np.ndarray,
     for i in range(n_feat):
         r_f = real_2d[:, i].flatten()
         s_f = synth_2d[:, i].flatten()
-        r_hist, bins = np.histogram(r_f, bins=n_bins, density=True)
-        s_hist, _    = np.histogram(s_f, bins=bins,   density=True)
+        # bins span BOTH real and synthetic values, so synthetic values
+        # outside the real range are counted instead of dropped
+        bins = np.linspace(min(r_f.min(), s_f.min()),
+                           max(r_f.max(), s_f.max()), n_bins + 1)
+        r_hist, _ = np.histogram(r_f, bins=bins, density=True)
+        s_hist, _ = np.histogram(s_f, bins=bins, density=True)
         r_hist = r_hist / np.sum(r_hist)
         s_hist = s_hist / np.sum(s_hist)
         results[i] = float(jensenshannon(r_hist, s_hist))
@@ -343,4 +347,4 @@ def evaluate_all(real: np.ndarray,
               f"{results['mae']:.4f} ± {results['mae_std']:.4f}")
 
     print(f"\n{'='*60}\n")
-    return results
+    return results  
