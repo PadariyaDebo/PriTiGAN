@@ -35,13 +35,16 @@ def sweep(dataset_name: str,
     t_disc_upper = iterations
     t_disc_frac  = int(td_fraction * iterations)
 
+    # num_microbatches = 1 in train.py: the batch gradient is clipped as a
+    # whole, so the sensitivity is 2C and the effective noise multiplier for
+    # accounting is noise_multiplier / 2 (same as train.py).
     rows = []
     for nm in noise_mults:
         eps_upper = estimate_epsilon(
-            n_train=n_train, batch_size=batch_size, noise_multiplier=nm,
+            n_train=n_train, batch_size=batch_size, noise_multiplier=nm / 2.0,  # one microbatch: sensitivity 2C
             t_embedding=t_embedding, t_discriminator=t_disc_upper, delta=delta)
         eps_frac = estimate_epsilon(
-            n_train=n_train, batch_size=batch_size, noise_multiplier=nm,
+            n_train=n_train, batch_size=batch_size, noise_multiplier=nm / 2.0,  # one microbatch: sensitivity 2C
             t_embedding=t_embedding, t_discriminator=t_disc_frac, delta=delta)
         rows.append((nm, eps_upper, eps_frac))
         print(f"  noise_multiplier={nm:>7.3f}  |  "
@@ -87,3 +90,4 @@ if __name__ == "__main__":
         data_path=args.data_path,
         output_dir=args.output_dir,
     )
+    
