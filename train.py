@@ -1,8 +1,4 @@
-"""
-Training script. DP-Adam on embedding + discriminator, plain Adam on
-generator/supervisor, RDP accounting, 10k iterations, discriminator only
-updated when its loss > 0.15 (Section 5.2/5.5).
-
+   """
 --baseline flag selects which networks get DP noise:
   pritigan       (default) -- both embedding and discriminator
   dptimegan      -- discriminator only
@@ -18,8 +14,8 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 
-from pritigan.model import PriTiGAN
-from pritigan.data  import load_dataset, preprocess, DATASET_CONFIG
+from PriTi.model import PriTiGAN
+from PriTi.data  import load_dataset, preprocess, DATASET_CONFIG
 
 # Default noise_multiplier / l2_norm_clip per dataset, tuned for eps ≈ 1
 # (Section 5.5).
@@ -99,8 +95,6 @@ def train(dataset_name: str,
     df = load_dataset(dataset_name, data_path)
     train_seq, test_seq, scaler, _train_scaled, _test_scaled = preprocess(
         df, seq_len, train_ratio=0.70, seed=seed)
-
-    # baseline runs go in their own subfolder so they don't clobber the
     # default pritigan run's outputs
     out = Path(output_dir) / dataset_name / baseline if baseline != "pritigan" \
         else Path(output_dir) / dataset_name
@@ -207,8 +201,6 @@ def train(dataset_name: str,
     print(f"  Saved loss curves → {out}/phase{{1,2,3}}_*.csv")
 
     # ── Privacy budget ────────────────────────────────────────────────────
-    # only count updates from networks that were actually DP-noised in this
-    # baseline -- e.g. dptimegan reports T_e=0 since embedding wasn't noised
     eff_t_embedding    = t_embedding_updates    if dp_embedding     else 0
     eff_t_discriminator = t_discriminator_updates if dp_discriminator else 0
 
@@ -239,9 +231,6 @@ def train(dataset_name: str,
               f"Discriminator (T_d={eff_t_discriminator}) updates, per Eq. 9-16.]")
 
     # ── Privacy accounting report ──────────────────────────────────────────
-    # sampling rate, noise multiplier, clip norm, per-network update counts,
-    # and the final (eps, delta) -- so the noise_multiplier -> epsilon
-    # mapping is reproducible instead of just quoted in the paper.
     privacy_report = {
         "dataset":                dataset_name,
         "baseline":               baseline,
@@ -317,4 +306,6 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         seed=args.seed,
         baseline=args.baseline,
-    )
+    )    
+  
+    
