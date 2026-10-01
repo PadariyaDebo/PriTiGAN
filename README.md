@@ -67,14 +67,6 @@ python train.py --dataset stock --baseline nondp           # no DP
 
 Each run saves loss curves, model weights, generated samples, and `privacy_accounting.json` (sampling rate, noise multiplier, clip norm, per-network update counts, epsilon) to `outputs/<dataset>/`.
 
-## Evaluation
-
-```bash
-python evaluate.py --dataset stock
-```
-
-Fidelity metrics (JSD/WD/DTW/PCC), memorization check, both MIA attacks, PCA/t-SNE plots. Run classification and regression 5 times with different seeds, and report mean ± std.
-
 ## Memorization check
 
 For each synthetic sequence, find its nearest real neighbor in the training set and in the test set. A memorizing generator will sit closer to training records than test records; a generalizing one should sit roughly equidistant from both. The "too close" threshold is calibrated against how close held-out test sequences naturally get to training sequences, rather than a fixed value.
