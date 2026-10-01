@@ -21,7 +21,6 @@ mia/
 configs/
   default.yaml
 train.py
-evaluate.py
 privacy_sweep.py     noise_multiplier -> epsilon lookup, without a full training run
 ```
 
