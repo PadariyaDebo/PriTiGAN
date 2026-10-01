@@ -20,8 +20,6 @@ def run_evaluation(dataset_name: str,
                    baseline:     str = "pritigan"):
 
     cfg       = DATASET_CONFIG[dataset_name]
-    # baseline runs live under outputs/<dataset>/<baseline>/; the default
-    # pritigan run stays at outputs/<dataset>/ for backward compatibility
     out       = (Path(output_dir) / dataset_name / baseline
                 if baseline != "pritigan" else Path(output_dir) / dataset_name)
 
@@ -70,7 +68,7 @@ def run_evaluation(dataset_name: str,
         "num_microbatches": 1,
         "learning_rate":    5e-4,
     })
-    # Build the networks once so their weights exist before loading
+    
     build_input = np.zeros((1, cfg["seq_len"], cfg["n_features"]), dtype=np.float32)
     _ = model.embedder(build_input)
     _ = model.discriminator(model.embedder(build_input))
