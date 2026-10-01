@@ -11,7 +11,7 @@ This project proposes a dual-noise injection strategy that selectively applies d
 ## What's in here
 
 ```
-pritigan/
+PriTi/
   model.py          model + DP training logic
   data.py           dataset download/preprocessing
 evaluation/
