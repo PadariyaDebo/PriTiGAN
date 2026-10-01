@@ -17,15 +17,12 @@ from pathlib import Path
 from PriTi.model import PriTiGAN
 from PriTi.data  import load_dataset, preprocess, DATASET_CONFIG
 
-# Default noise_multiplier / l2_norm_clip per dataset, tuned for eps ≈ 1
-# (Section 5.5).
 DEFAULT_DP = {
     "stock":  {"noise_multiplier": 90.0, "l2_norm_clip": 1.5},
     "energy": {"noise_multiplier": 1.0,  "l2_norm_clip": 1.0},
     "mba":    {"noise_multiplier": 0.8,  "l2_norm_clip": 1.0},
 }
 
-# --baseline -> (dp_embedding, dp_discriminator)
 BASELINE_DP_FLAGS = {
     "pritigan":       (True,  True),
     "dptimegan":      (False, True),
@@ -37,7 +34,7 @@ BASELINE_DP_FLAGS = {
 def make_tf_dataset(sequences: np.ndarray,
                     batch_size: int,
                     seed: int = 42):
-    """Create a repeating, shuffled tf.data pipeline."""
+    
     ds = (tf.data.Dataset
           .from_tensor_slices(sequences)
           .shuffle(buffer_size=len(sequences), seed=seed)
@@ -47,7 +44,7 @@ def make_tf_dataset(sequences: np.ndarray,
 
 
 def make_noise_iter(batch_size: int, seq_len: int, n_features: int):
-    """Infinite generator of uniform noise batches (Z ~ U[0,1])."""
+   
     def _gen():
         while True:
             yield np.random.uniform(0, 1, (seq_len, n_features)).astype(np.float32)
@@ -68,11 +65,7 @@ def train(dataset_name: str,
           output_dir:   str   = "outputs",
           seed:         int   = 42,
           baseline:     str   = "pritigan"):
-    """
-    Three-phase training: autoencoder pretrain, supervisor pretrain, joint
-    DP training, `iterations` steps each. `baseline` picks which networks
-    get DP noise (see BASELINE_DP_FLAGS).
-    """
+    
     if baseline not in BASELINE_DP_FLAGS:
         raise ValueError(f"Unknown baseline '{baseline}'. "
                          f"Choose from {list(BASELINE_DP_FLAGS.keys())}.")
@@ -307,5 +300,3 @@ if __name__ == "__main__":
         seed=args.seed,
         baseline=args.baseline,
     )  
-
-             
