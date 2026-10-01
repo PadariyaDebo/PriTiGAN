@@ -1,5 +1,5 @@
 """
-PriTiGAN model: TimeGAN backbone + dual-noise DP (embedding + discriminator).
+PriTiGAN model: dual-noise DP (embedding + discriminator).
 """
 
 import numpy as np
